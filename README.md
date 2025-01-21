@@ -1,0 +1,1 @@
+# domen-check-bot
