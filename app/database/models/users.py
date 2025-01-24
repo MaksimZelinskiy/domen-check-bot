@@ -15,7 +15,7 @@ class User(Base):
     name: Mapped[str] = mapped_column()
     username: Mapped[str | None] = mapped_column(default=None)
 
-    status: Mapped[STATUS] = mapped_column(default=None)    
+    status: Mapped[STATUS] = mapped_column(default="active")
 
     lang: Mapped[str | None] = mapped_column(default=None)
     utm: Mapped[str | None] = mapped_column(default="search")

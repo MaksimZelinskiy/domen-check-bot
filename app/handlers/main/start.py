@@ -22,7 +22,6 @@ async def command_start(message: Message, repo: RequestsRepo):
     
     user_exists = await repo.users.get_user_by_id(message.from_user.id)
     if not user_exists:
-
         await repo.users.create_user(
             user_id=message.from_user.id,
             utm=args,
@@ -30,7 +29,8 @@ async def command_start(message: Message, repo: RequestsRepo):
             date_reg=date_reg,
             username=username,
             lang=locale,
-            role_id=3 # Гость
+            role_id=3, # Гость
+            status="active"  # Добавили статус
         )
 
     role = await repo.roles.get_role_by_id(user_exists.role_id)

@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Установка необходимых зависимостей, включая postgresql-client
+# Установка необходимых зависимостей
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc \
@@ -20,9 +20,5 @@ COPY app/ .
 COPY app/init_db.sh .
 RUN chmod +x init_db.sh
 
-# Установка окружения
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# Запуск бота
-CMD ["python", "main.py"]
+# Запуск скрипта инициализации
+CMD ["./init_db.sh"]

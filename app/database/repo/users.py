@@ -24,19 +24,22 @@ class UsersRepo(BaseRepo):
     async def create_user(
         self,
         user_id: int,
-        username: str,
         name: str,
-        language: str,
-        utm: str,
-        role_id: int,
+        username: str | None = None,
+        lang: str | None = None,
+        utm: str | None = None,
+        role_id: int | None = None,
+        status: str = "active",
     ):
         query = insert(User).values(
             user_id=user_id,
-            username=username,
             name=name,
+            username=username,
+            lang=lang,
             utm=utm,
-            lang=language,
-            role_id=role_id
+            role_id=role_id,
+            status=status,
+            date_reg=func.now()
         )
         
         await self.session.execute(query)

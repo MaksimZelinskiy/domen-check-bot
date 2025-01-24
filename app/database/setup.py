@@ -62,10 +62,10 @@ async def get_db() -> RequestsRepo:
 async def create_tables(engine) -> None:
     """Создает таблицы в базе данных, если они не существуют."""
     async with engine.begin() as conn:
-        # Сначала создаем все таблицы
+        # создаем все таблицы
         await conn.run_sync(Base.metadata.create_all)
         
-    # После создания таблиц добавляем базовые роли
+    # создания таблиц добавляем базовые роли
     session_pool = create_session_pool(engine)
     async with session_pool() as session:
         try:
