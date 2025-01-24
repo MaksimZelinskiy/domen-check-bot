@@ -1,19 +1,24 @@
 FROM python:3.12-slim
 
-# Установка рабочей директории
 WORKDIR /app
 
-# Установка зависимостей для сборки
-RUN apt-get update && apt-get install -y \
+# Установка необходимых зависимостей, включая postgresql-client
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
+    postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
 
-# Копирование requirements.txt
-COPY requirements.txt .
+# Копирование и установка зависимостей
+COPY app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копирование проекта
-COPY . .
+COPY app/ .
+
+# Делаем скрипт инициализации исполняемым
+COPY app/init_db.sh .
+RUN chmod +x init_db.sh
 
 # Установка окружения
 ENV PYTHONPATH=/app

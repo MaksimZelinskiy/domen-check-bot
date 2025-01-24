@@ -7,7 +7,6 @@ from aiogram.filters.state import StateFilter
 
 from filters import IsPrivate
 from loader import bot
-from data import main
 from database.repo.requests import RequestsRepo
 
 router = Router()

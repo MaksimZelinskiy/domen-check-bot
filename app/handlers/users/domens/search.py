@@ -14,18 +14,16 @@ from filters import IsPrivate, IsAdmin
 from loader import bot
 from database.repo.requests import RequestsRepo
 
+from utils.states import DomainCheckStates
+
 router = Router()
 
-class DomainCheckStates(StatesGroup):
-    waiting_domains = State()
-
 @router.message(Command("search"))
-@router.message(F.text == "Проверить домены")
 async def command_check_domains(message: Message, state: FSMContext):
-    await message.answer("Введите список доменов для проверки (каждый домен с новой строки):")
+    await message.answer("Введите список доменов для проверки (каждый домен с новой строки):\n\n<b>Пример:</b>\nexample.com\nhttp://example.com\nhttps://example.com")
     await state.set_state(DomainCheckStates.waiting_domains)
 
-async def check_domain(domain: str, proxy: str = None):
+async def check_domain(domain: str, proxy: str = None, session: aiohttp.ClientSession = None):
     parsed_url = urlparse(domain)
     domain_name = parsed_url.netloc or domain
     
@@ -41,19 +39,19 @@ async def check_domain(domain: str, proxy: str = None):
         "availabl": "недоступен"
     }
     
+    # проверка домена через сессию
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                domain,
-                timeout=aiohttp.ClientTimeout(total=5),
-                ssl=True,
-                proxy=proxies
-            ) as response:
-                result.update({
-                    "ssl_status": "OK",
-                    "http_status": response.status,
-                    "availabl": "доступен"
-                })
+        async with session.get(
+            domain,
+            timeout=aiohttp.ClientTimeout(total=5),
+            ssl=True,
+            proxy=proxies
+        ) as response:
+            result.update({
+                "ssl_status": "OK",
+                "http_status": response.status,
+                "availabl": "доступен"
+            })
                 
     except ssl.SSLError:
         result["ssl_status"] = "Ошибка"
@@ -65,21 +63,25 @@ async def check_domain(domain: str, proxy: str = None):
 async def check_domains_batch(domains: list, proxy: str = None) -> list:
     tasks = []
 
-    # создание задач в пачке
-    for domain in domains:
-        domain = domain.strip()
+    # создание сессии для проверки пачки доменов
+    async with aiohttp.ClientSession() as session:
+
+        # создание задач в пачке
+        for domain in domains:
+            domain = domain.strip()
+                
+            # обработка домена
+            if domain.startswith('http://'):
+                domain = domain.replace('http://', 'https://')
+            elif not domain.startswith('https://'):
+                domain = f'https://{domain}'
+
+            # создание задачи для проверки домена
+            tasks.append(check_domain(domain, proxy, session))
         
-        if domain.startswith('http://'):
-            domain = domain.replace('http://', 'https://')
-        
-        elif not domain.startswith('https://'):
-            domain = f'https://{domain}'
-        
-        tasks.append(check_domain(domain, proxy))
-    
-    # запуск задач в пачке
-    results = await asyncio.gather(*tasks)
-    return results
+        # запуск задач в пачке
+        results = await asyncio.gather(*tasks)
+        return results
 
 @router.message(DomainCheckStates.waiting_domains)
 async def process_domains(message: Message, state: FSMContext):

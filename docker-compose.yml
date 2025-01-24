@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   pg_db:
@@ -45,8 +45,7 @@ services:
     env_file:
       - .env
     depends_on:
-      pg_db:
-        condition: service_healthy
+      - pg_db
     restart: unless-stopped
     networks:
       - domen_check_network
@@ -54,7 +53,13 @@ services:
       resources:
         limits:
           cpus: '1'
-          memory: 1G
+          memory: 2G
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+      - DB_HOST=pg_db
+      - DB_PORT=5432
 
 networks:
   domen_check_network:

@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from sqlalchemy import Date, cast, func, insert, select, update
+
 from data.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_USER, DB_PORT
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
 from sqlalchemy.pool import AsyncAdaptedQueuePool
@@ -60,17 +62,24 @@ async def get_db() -> RequestsRepo:
 async def create_tables(engine) -> None:
     """Создает таблицы в базе данных, если они не существуют."""
     async with engine.begin() as conn:
+        # Сначала создаем все таблицы
         await conn.run_sync(Base.metadata.create_all)
         
-        # Создаем базовые роли если их нет
-        session_pool = create_session_pool(engine)
-        async with session_pool() as session:
-
+    # После создания таблиц добавляем базовые роли
+    session_pool = create_session_pool(engine)
+    async with session_pool() as session:
+        try:
             for role in STANDARD_ROLES:
-                role_exists = await session.get(Role, role["id"])
-                if not role_exists:
-                    role_exists = Role(id=role["id"], name=role["name"])
-                    session.add(role_exists)
+                # Проверяем существование роли
+                stmt = select(Role).where(Role.id == role["id"])
+                existing_role = await session.execute(stmt)
+                existing_role = existing_role.scalar_one_or_none()
+                
+                if not existing_role:
+                    new_role = Role(id=role["id"], name=role["name"])
+                    session.add(new_role)
             
             await session.commit()
-                
+        except Exception as e:
+            await session.rollback()
+            raise

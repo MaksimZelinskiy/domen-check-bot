@@ -11,9 +11,6 @@ from utils.states import GetTodoStates
 
 router = Router()
 
-class GetTodoStates(StatesGroup):
-    todo_id = State()
-
 @router.message(Command("get-todo"), IsPrivate())
 async def command_get_todo(message: Message, state: FSMContext):
     await message.answer("Введите ID задачи:")
