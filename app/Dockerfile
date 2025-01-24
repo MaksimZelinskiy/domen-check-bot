@@ -1,16 +1,23 @@
 FROM python:3.12-slim
 
+# Установка рабочей директории
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY bot/requirements.txt /app/
-RUN pip install -r requirements.txt
+# Установка зависимостей для сборки
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy bot directory and required fast_api components
-COPY app/ /app/
+# Копирование requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set PYTHONPATH to include the app directory
+# Копирование проекта
+COPY . .
+
+# Установка окружения
 ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-# Run from the correct directory
+# Запуск бота
 CMD ["python", "main.py"]

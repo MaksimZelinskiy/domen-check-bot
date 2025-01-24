@@ -15,9 +15,11 @@ class User(Base):
     name: Mapped[str] = mapped_column()
     username: Mapped[str | None] = mapped_column(default=None)
 
-    status: Mapped[STATUS] = mapped_column(default="active")    
+    status: Mapped[STATUS] = mapped_column(default=None)    
 
     lang: Mapped[str | None] = mapped_column(default=None)
     utm: Mapped[str | None] = mapped_column(default="search")
+
+    role_id: Mapped[int | None] = mapped_column(default=None)
 
     date_reg: Mapped[datetime] = mapped_column(default=func.now())

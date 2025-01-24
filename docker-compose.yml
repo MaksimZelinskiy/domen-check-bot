@@ -1,67 +1,65 @@
 version: '3.8'
 
-x-logging: &default-logging
-  driver: loki
-  options:
-    mode: non-blocking
-    max-buffer-size: 4m
-    loki-retries: "3"
-    loki-url: 'http://localhost:3100/api/prom/push'
-    loki-pipeline-stages: |
-      - multiline:
-          firstline: '^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}'
-          max_wait_time: 3s
-      - regex:
-          expression: '^(?P<time>\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2},\d{3}) (?P<message>(?s:.*))$$'
-
 services:
-  loki:
-    image: grafana/loki:3.0.0
-    command: -config.file=/etc/loki/local-config.yaml
-    ports:
-      - "3100:3100"
-    logging: *default-logging
-
   pg_db:
-    image: postgres:13
+    image: postgres:13-alpine
+    container_name: domen_check_db
     environment:
-      - POSTGRES_USER=db_user
-      - POSTGRES_PASSWORD=upgrade_2302_db
-      - POSTGRES_DB=dreamcoin
-    shm_size: 256mb
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    shm_size: 512mb  
     ports:
-      - 5555:5432
+      - "5432:5432"
     volumes:
-      - ./shared_data/pg_db:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     command: |
-        postgres
-          -c shared_preload_libraries=pg_stat_statements
-          -c pg_stat_statements.track=all
-          -c max_connections=1000
-          -c shared_buffers=2GB
-          -c effective_cache_size=8GB
-          -c work_mem=64MB
-          -c maintenance_work_mem=1GB
-          -c min_wal_size=128MB
-          -c max_wal_size=2GB
-          -c checkpoint_completion_target=0.9
-          -c wal_buffers=16MB
-          -c default_statistics_target=100
+      postgres
+        -c shared_preload_libraries=pg_stat_statements
+        -c pg_stat_statements.track=all
+        -c max_connections=300  
+        -c shared_buffers=1536MB 
+        -c effective_cache_size=4GB
+        -c work_mem=32MB
+        -c maintenance_work_mem=256MB
+        -c min_wal_size=2GB 
+        -c max_wal_size=4GB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c idle_in_transaction_session_timeout=600000  
     deploy:
       resources:
         limits:
           cpus: '2'
           memory: 6G
-    restart: unless-stopped
-  
+
   tg_bot:
     build:
       context: .
       dockerfile: app/Dockerfile
+    container_name: domen_check_bot
     ports:
       - "8001:8001"
     env_file:
       - .env
+    depends_on:
+      pg_db:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
-      - dokploy-network
+      - domen_check_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
 
+networks:
+  domen_check_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

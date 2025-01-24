@@ -6,7 +6,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
-class Role(Base):
-    __tablename__ = "roles"
+STATUS = Literal["active", "done"]
+
+class Todo(Base):
+    __tablename__ = "user_todos"
     id: Mapped[int] = mapped_column(BIGINT, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BIGINT)
     name: Mapped[str] = mapped_column()
+    created_at: Mapped[datetime] = mapped_column(default=func.now())

@@ -1,10 +1,12 @@
-from aiogram import types, Dispatcher
+from aiogram import Bot
+from aiogram.types import BotCommand
 
-async def set_defualt_commands(dp: Dispatcher):
-    # await dp.bot.set_chat_menu_button(
-    #         menu_button=types.MenuButtonWebApp(text="Играть", web_app=types.WebAppInfo(url=f"https://app.dreamcoin.pro/"))
-    #     )    
-    # await dp.bot.set_my_commands([
-    #     types.BotCommand('start', 'Start'),
-    # ])
-    pass
+async def set_default_commands(bot: Bot):
+    commands = [
+        BotCommand(command='start', description='Начать'),
+        BotCommand(command='get-all-todo', description='Получить все задачи'),
+        BotCommand(command='create-todo', description='Создать задачу'),
+        BotCommand(command='update-todo', description='Обновить задачу'),
+        BotCommand(command='delete-todo', description='Удалить задачу'),
+    ]
+    await bot.set_my_commands(commands)

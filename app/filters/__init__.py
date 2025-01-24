@@ -1,8 +1,7 @@
-from aiogram import Dispatcher
+from .users import IsPrivate, IsAdmin, IsUser
 
-from .check_reg import IsPrivate
-
-def setup1(dp: Dispatcher):
-    dp.filters_factory.bind(IsPrivate)
-    
-
+__all__ = [
+    "IsPrivate",
+    "IsAdmin", 
+    "IsUser"
+]

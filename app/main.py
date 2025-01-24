@@ -2,9 +2,8 @@ import asyncio
 import logging
 
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
 
-from fast_api.database.setup import create_engine, create_session_pool
+from database.setup import create_engine, create_session_pool, create_tables
 from middlewares.database import DatabaseMiddleware
 
 from loader import bot, dp
@@ -56,8 +55,18 @@ def setup_logging():
 
 async def main():
     setup_logging()
+    logger = logging.getLogger(__name__)
 
     engine = create_engine()
+    
+    # Создаем таблицы если они не существуют
+    try:
+        await create_tables(engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {e}")
+        raise
+
     session_pool = create_session_pool(engine)
 
     dp.workflow_data.update(bot=bot)
